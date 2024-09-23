@@ -1,4 +1,4 @@
-FROM  node:14.17.0
+FROM  ubuntu:20.04
 LABEL maintainer="icaro_martins98@hotmail.com"
 
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -12,13 +12,24 @@ ENV DEBIAN_FRONTEND=noninteractive \
 # Install basics
 RUN apt-get update &&  \
     apt-get install -y git wget curl unzip ruby ruby-dev gcc make
-    
-RUN npm install -g cordova@"$CORDOVA_VERSION" && \
-    npm install -g ionic@"$IONIC_VERSION" && \
-    npm cache clear --force && \
-    gem install sass --no-user-install && \
-    ionic start myApp sidemenu --no-interactive --no-git --no-link
+	
+# Install node
+RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh | bash && \ 
+    . ~/.nvm/nvm.sh &&  \
+	nvm install 14 && \
+	node -v && \
+	npm -v
 
+RUN . ~/.nvm/nvm.sh &&  \
+    npm install -g cordova@"$CORDOVA_VERSION" && \
+    npm install -g ionic@"$IONIC_VERSION" && \
+    npm cache clear --force
+
+RUN apt-get install -y --no-install-recommends autoconf automake bzip2 dpkg-dev file g++ gcc imagemagick libbz2-dev libc6-dev libcurl4-openssl-dev libdb-dev libevent-dev libffi-dev libgdbm-dev libglib2.0-dev libgmp-dev libjpeg-dev libkrb5-dev liblzma-dev libmagickcore-dev libmagickwand-dev libmaxminddb-dev libncurses5-dev libncursesw5-dev libpng-dev libpq-dev libreadline-dev libsqlite3-dev libssl-dev libtool libwebp-dev libxml2-dev libxslt-dev libyaml-dev make patch unzip xz-utils zlib1g-dev $( if apt-cache show 'default-libmysqlclient-dev' 2>/dev/null | grep -q '^Version:'; then echo 'default-libmysqlclient-dev'; else echo 'libmysqlclient-dev'; fi )
+
+	
+RUN . ~/.nvm/nvm.sh &&  \
+    npm install -g sass;
 
 #ANDROID
 #JAVA
@@ -42,7 +53,7 @@ ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64/
 RUN echo ANDROID_HOME="${ANDROID_HOME}" >> /etc/environment && \
     dpkg --add-architecture i386 && \
     apt-get update && \
-    apt-get install -y --force-yes expect ant wget zipalign libc6-i386 lib32stdc++6 lib32gcc1 lib32ncurses5 lib32z1 qemu-kvm kmod && \
+    apt-get install -y expect ant wget zipalign libc6-i386 lib32stdc++6 lib32gcc1 lib32ncurses6 lib32z1 qemu-kvm kmod && \
     apt-get clean && \
     apt-get autoclean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
