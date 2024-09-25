@@ -14,22 +14,14 @@ RUN apt-get update &&  \
     apt-get install -y git wget curl unzip ruby ruby-dev gcc make
 	
 # Install node
-RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh | bash && \ 
-    . ~/.nvm/nvm.sh &&  \
-	nvm install 14 && \
-	node -v && \
-	npm -v
+RUN curl -sL https://deb.nodesource.com/setup_14.x | bash - \
+    && apt-get install -y nodejs
 
-RUN . ~/.nvm/nvm.sh &&  \
-    npm install -g cordova@"$CORDOVA_VERSION" && \
-    npm install -g ionic@"$IONIC_VERSION" && \
-    npm cache clear --force
-
-RUN apt-get install -y --no-install-recommends autoconf automake bzip2 dpkg-dev file g++ gcc imagemagick libbz2-dev libc6-dev libcurl4-openssl-dev libdb-dev libevent-dev libffi-dev libgdbm-dev libglib2.0-dev libgmp-dev libjpeg-dev libkrb5-dev liblzma-dev libmagickcore-dev libmagickwand-dev libmaxminddb-dev libncurses5-dev libncursesw5-dev libpng-dev libpq-dev libreadline-dev libsqlite3-dev libssl-dev libtool libwebp-dev libxml2-dev libxslt-dev libyaml-dev make patch unzip xz-utils zlib1g-dev $( if apt-cache show 'default-libmysqlclient-dev' 2>/dev/null | grep -q '^Version:'; then echo 'default-libmysqlclient-dev'; else echo 'libmysqlclient-dev'; fi )
-
+RUN npm install -g cordova@"$CORDOVA_VERSION" && \
+    npm install -g ionic@"$IONIC_VERSION"
 	
-RUN . ~/.nvm/nvm.sh &&  \
-    npm install -g sass;
+RUN npm install -g sass \ 
+    && npm rebuild node-sass
 
 #ANDROID
 #JAVA
@@ -66,12 +58,11 @@ RUN cd /opt \
     && mv /tmp/cmdline-tools/ ${ANDROID_SDK_ROOT}/cmdline-tools/latest \
     && rm android-commandline-tools.zip && ls -la ${ANDROID_SDK_ROOT}/cmdline-tools/latest/
 
-
-
-# Install Gradle
 WORKDIR /opt/gradle
-RUN curl -L https://downloads.gradle-dn.com/distributions/gradle-${GRADLE_VERSION}-bin.zip -o gradle-${GRADLE_VERSION}-bin.zip
-RUN unzip gradle-${GRADLE_VERSION}-bin.zip
+RUN wget https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip \
+   && unzip gradle-${GRADLE_VERSION}-bin.zip -d /opt/gradle \
+   && rm gradle-${GRADLE_VERSION}-bin.zip
+   
 ENV GRADLE_HOME=/opt/gradle/gradle-${GRADLE_VERSION}
 ENV PATH=$PATH:$GRADLE_HOME/bin
 RUN gradle --version
@@ -87,7 +78,7 @@ RUN yes | sdkmanager --licenses
 RUN yes | sdkmanager --update --channel=3
 # Please keep all sections in descending order!
 
-RUN yes | sdkmanager \
+RUN yes | sdkmanager  \
     "platforms;android-29" \
     "platforms;android-28" \
     "platforms;android-27" \
@@ -97,15 +88,9 @@ RUN yes | sdkmanager \
     "extras;android;m2repository" \
     "extras;google;m2repository" \
     "extras;google;google_play_services" \
-    "extras;m2repository;com;android;support;constraint;constraint-layout;1.0.2" \
-    "extras;m2repository;com;android;support;constraint;constraint-layout;1.0.1" \
     "add-ons;addon-google_apis-google-23" \
     "add-ons;addon-google_apis-google-22" \
     "add-ons;addon-google_apis-google-21"
-
-# Test First Build so that it will be faster later
-RUN cd /myApp && \
-    ionic cordova build android --prod --no-interactive --release
 
 WORKDIR /myApp
 EXPOSE 8100 
